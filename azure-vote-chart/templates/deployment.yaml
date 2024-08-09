@@ -1,0 +1,66 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}-back
+  namespace: {{ .Values.app.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}-back
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}-back
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: {{ .Values.app.name }}-back
+        image: {{ .Values.redis.image }}
+        env:
+{{- range .Values.redis.env }}
+          - name: {{ .name }}
+            value: "{{ .value }}"
+{{- end }}
+        ports:
+          - containerPort: {{ .Values.redis.containerPort }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}-front
+  namespace: {{ .Values.app.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}-front
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}-front
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: {{ .Values.app.name }}-front
+        image: {{ .Values.front.image }}
+        ports:
+          - containerPort: {{ .Values.front.containerPort }}
+        resources:
+          requests:
+            cpu: {{ .Values.front.cpu.requests }}
+          limits:
+            cpu: {{ .Values.front.cpu.limits }}
+        env:
+{{- range .Values.front.env }}
+          - name: {{ .name }}
+            value: "{{ .value }}"
+{{- end }}

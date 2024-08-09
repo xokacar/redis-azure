@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.app.name }}-back
+  namespace: {{ .Values.app.namespace }}
+spec:
+  ports:
+    - port: {{ .Values.redis.servicePort }}
+      targetPort: {{ .Values.redis.containerPort }}
+  selector:
+    app: {{ .Values.app.name }}-back
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.app.name }}-front
+  namespace: {{ .Values.app.namespace }}
+spec:
+  type: {{ if .Values.front.nodePort }}NodePort{{ else if .Values.front.loadBalancer }}LoadBalancer{{ else }}ClusterIP{{ end }}
+  ports:
+    - port: {{ .Values.front.servicePort }}
+      targetPort: {{ .Values.front.containerPort }}
+      {{- if .Values.front.nodePort }}
+      nodePort: {{ .Values.front.nodePort }}
+      {{- end }}
+  selector:
+    app: {{ .Values.app.name }}-front

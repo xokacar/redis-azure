@@ -1,0 +1,31 @@
+replicaCount: 1
+
+app:
+  name: azure-voting-app-redis-test
+  namespace: acf-test
+  environment: test
+
+serviceAccount:
+  create: true
+  automount: true
+  name: "azure-voting-app-svc-account"
+
+redis:
+  image: mcr.microsoft.com/oss/bitnami/redis:6.0.8
+  containerPort: 6379
+  env:
+    - name: ALLOW_EMPTY_PASSWORD
+      value: "yes"
+  servicePort: 6379
+
+front:
+  image: mcr.microsoft.com/azuredocs/azure-vote-front:v1
+  containerPort: 80
+  cpu:
+    requests: 250m
+    limits: 500m
+  env:
+    - name: REDIS
+      value: "azure-vote-back"
+  servicePort: 5000
+  nodePort: "32552"
